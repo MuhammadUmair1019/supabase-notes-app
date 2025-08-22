@@ -11,78 +11,162 @@
           extend: {
             colors: {
               brand: {
-                500: '#10b981',
-                600: '#059669',
+                500: "#10b981",
+                600: "#059669",
               },
             },
           },
         },
-        darkMode: 'media',
+        darkMode: "media",
       };
     </script>
   </head>
-  <body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-slate-100 antialiased">
-    <div class="absolute inset-0 -z-10 [background:radial-gradient(60%_40%_at_50%_-10%,rgba(16,185,129,.25),transparent_60%),radial-gradient(40%_30%_at_20%_-10%,rgba(20,184,166,.25),transparent_60%),radial-gradient(40%_30%_at_80%_-10%,rgba(59,130,246,.2),transparent_60%)]"></div>
+  <body
+    class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-slate-100 antialiased"
+  >
+    <div
+      class="absolute inset-0 -z-10 [background:radial-gradient(60%_40%_at_50%_-10%,rgba(16,185,129,.25),transparent_60%),radial-gradient(40%_30%_at_20%_-10%,rgba(20,184,166,.25),transparent_60%),radial-gradient(40%_30%_at_80%_-10%,rgba(59,130,246,.2),transparent_60%)]"
+    ></div>
 
     <header class="px-4 pt-8">
       <div class="mx-auto max-w-3xl flex items-start justify-between gap-4">
         <div>
           <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">
-            <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent">Supabase Notes</span>
+            <span
+              class="bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent"
+              >Supabase Notes</span
+            >
           </h1>
-          <p class="mt-2 text-slate-400">Simple, fast, and secure notes with Supabase.</p>
+          <p class="mt-2 text-slate-400">
+            Simple, fast, and secure notes with Supabase.
+          </p>
         </div>
-        <button id="logout" class="hidden shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-700/60">Logout</button>
+        <button
+          id="logout"
+          class="hidden shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-700/60"
+        >
+          Logout
+        </button>
       </div>
     </header>
 
     <main class="px-4 pb-16">
       <div class="mx-auto mt-8 grid max-w-3xl gap-6">
         <!-- Auth Section -->
-        <section id="auth-section" class="rounded-2xl border border-slate-800/60 bg-slate-900/60 backdrop-blur p-5 sm:p-6">
+        <section
+          id="auth-section"
+          class="rounded-2xl border border-slate-800/60 bg-slate-900/60 backdrop-blur p-5 sm:p-6"
+        >
           <div class="flex items-start justify-between gap-4">
             <div>
-              <h2 class="text-lg font-medium text-emerald-300">Login or Create an account</h2>
-              <p class="mt-1 text-sm text-slate-400">Use email and password to continue.</p>
+              <h2 class="text-lg font-medium text-emerald-300">
+                Login or Create an account
+              </h2>
+              <p class="mt-1 text-sm text-slate-400">
+                Use email and password to continue.
+              </p>
             </div>
-            
           </div>
           <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div class="grid gap-2">
               <label for="email" class="text-sm text-slate-300">Email</label>
-              <input id="email" type="email" placeholder="you@example.com" class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none" />
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none"
+              />
             </div>
             <div class="grid gap-2">
-              <label for="password" class="text-sm text-slate-300">Password</label>
-              <input id="password" type="password" placeholder="••••••••" class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none" />
+              <label for="password" class="text-sm text-slate-300"
+                >Password</label
+              >
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none"
+              />
             </div>
           </div>
           <div class="mt-4 flex flex-wrap items-center gap-3">
-            <button id="signup" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-medium text-emerald-50 shadow-lg shadow-emerald-600/20 ring-1 ring-inset ring-emerald-400/30 hover:from-emerald-400 hover:to-emerald-600">
+            <button
+              id="signup"
+              class="inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-medium text-emerald-50 shadow-lg shadow-emerald-600/20 ring-1 ring-inset ring-emerald-400/30 hover:from-emerald-400 hover:to-emerald-600"
+            >
               Sign Up
             </button>
-            <button id="login" class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/60">
+            <button
+              id="login"
+              class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/60"
+            >
               Login
             </button>
           </div>
         </section>
 
         <!-- Notes Section (Protected) -->
-        <section id="notes-section" style="display:none;" class="rounded-2xl border border-slate-800/60 bg-slate-900/60 backdrop-blur p-5 sm:p-6">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section
+          id="notes-section"
+          style="display: none"
+          class="rounded-2xl border border-slate-800/60 bg-slate-900/60 backdrop-blur p-5 sm:p-6"
+        >
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          >
             <h2 class="text-lg font-medium text-emerald-300">Your Notes</h2>
-            <div class="flex w-full gap-2 sm:w-auto">
-              <input id="new-note" type="text" placeholder="Write a note..." class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none" />
-              <button id="add-note" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-sky-500 to-sky-600 px-4 py-2 text-sm font-medium text-sky-50 shadow-lg shadow-sky-600/20 ring-1 ring-inset ring-sky-400/30 hover:from-sky-400 hover:to-sky-600">
-                Add
+            <div class="w-full sm:w-auto">
+              <input
+                id="search"
+                type="text"
+                placeholder="Search notes..."
+                class="w-full sm:w-64 rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm leading-6 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none"
+              />
+            </div>
+          </div>
+          <div class="mt-2 flex flex-col gap-2">
+            <input
+              id="new-title"
+              type="text"
+              placeholder="Note title"
+              class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm leading-6 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none"
+            />
+            <textarea
+              id="new-note"
+              placeholder="Write your note..."
+              class="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm leading-6 text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-700/40 outline-none min-h-[80px]"
+            ></textarea>
+            <div class="flex items-center justify-end gap-2">
+              <button
+                id="cancel-edit"
+                class="hidden inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/60"
+              >
+                Cancel
+              </button>
+              <button
+                id="add-note"
+                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-sky-500 to-sky-600 px-4 py-2 text-sm font-medium text-sky-50 shadow-lg shadow-sky-600/20 ring-1 ring-inset ring-sky-400/30 hover:from-sky-400 hover:to-sky-600"
+              >
+                Add Note
               </button>
             </div>
           </div>
-          
+
           <div class="mt-4">
-            <div id="notes-loader" class="hidden flex items-center justify-center gap-3 rounded-xl border border-slate-800 bg-slate-800/40 p-4">
-              <span class="inline-block h-5 w-5 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin"></span>
+            <div
+              id="notes-loader"
+              class="hidden flex items-center justify-center gap-3 rounded-xl border border-slate-800 bg-slate-800/40 p-4"
+            >
+              <span
+                class="inline-block h-5 w-5 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin"
+              ></span>
               <span class="text-sm text-slate-400">Loading notes...</span>
+            </div>
+            <div
+              id="notes-empty"
+              class="hidden mt-3 rounded-xl border border-slate-800 bg-slate-800/40 p-6 text-center text-slate-400"
+            >
+              No notes yet. Create your first note above.
             </div>
             <ul id="notes-list" class="mt-3 grid gap-3"></ul>
           </div>
@@ -91,12 +175,18 @@
     </main>
 
     <!-- Toast / Loader -->
-    <div id="toast" class="hidden fixed top-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-slate-200 shadow-xl backdrop-blur ring-1 ring-black/10">
-      <span id="toast-spinner" class="inline-block h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin"></span>
+    <div
+      id="toast"
+      class="hidden fixed top-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-slate-200 shadow-xl backdrop-blur ring-1 ring-black/10"
+    >
+      <span
+        id="toast-spinner"
+        class="inline-block h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin"
+      ></span>
       <span id="toast-text">Loading...</span>
     </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="app.js" defer></script>
   </body>
-  </html>
+</html>

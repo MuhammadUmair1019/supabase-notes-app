@@ -5,38 +5,34 @@ A minimal notes app using Supabase Auth + Database with a modern Tailwind UI. No
 ### Highlights
 - **Zero-build**: Pure HTML/CSS/JS. Open and run.
 - **Modern UI**: Tailwind CDN, gradient dark theme, glass panels, responsive layout.
-- **Smooth feedback**: Top-right toast/loader replaces alerts; inline loader for notes fetch.
-- **Auth**: Email/password sign up, login, logout.
-- **CRUD**: Create, read, update, delete personal notes.
+- **Smooth feedback**: Top-right toast/loader (no alerts) + inline loader for notes fetch.
+- **Auth**: Email/password sign up, login, logout; session remembered.
+- **CRUD**: Create, read, update, delete personal notes with titles.
 - **Per-user data**: Row Level Security restricts notes to the owning user.
 
 ### UI Features
-- **Header**: App title with gradient text; `Logout` button appears only when logged in.
-- **Auth section**:
-  - Email and password inputs with focus rings and validation-friendly styling
-  - `Sign Up` (accent) and `Login` (neutral) buttons
-- **Toast/Loader**:
-  - Non-blocking toast in the top-right for progress/success/error messages
-  - Auto-hides after short actions; spinner shows during longer operations
-- **Notes section** (visible after login):
-  - Add note input + `Add` button
-  - Grid list of note cards with `Edit` and `Delete` actions
-  - Subtle card borders, dark glass, and hover feedback
-  - Inline loader shown while fetching notes
+- **Header**: App title with gradient text; `Logout` button shows only when logged in.
+- **Auth section**: Email/password inputs; `Sign Up` and `Login` buttons.
+- **Toast/Loader**: Non-blocking toast in the top-right for progress/success/error; auto-hides.
+- **Notes section** (after login):
+  - **Search**: Live filter by title or content.
+  - **Add**: Title and content inputs with compact spacing, aligned placeholders.
+  - **Inline edit**: Click `Edit` on a card to load that note into the top inputs, then `Save Changes` or `Cancel`.
+  - **List**: Note cards with `Edit` and `Delete` actions; subtle borders and hover states.
+  - **Empty state**: Friendly card when there are no notes.
 
 ### Functionality
 - **Authentication**
-  - Email/password sign up and login using Supabase Auth (`@supabase/supabase-js@2`)
-  - Session checked on page load; UI toggles between Auth and Notes
-  - Header `Logout` shown only when a session exists; hidden after sign out
+  - Email/password sign up and login using Supabase Auth (`@supabase/supabase-js@2`).
+  - Session is checked on page load; UI toggles between Auth and Notes.
+  - Header `Logout` only visible when authenticated.
 - **Notes CRUD**
-  - Reads notes ordered by `created_at` (desc)
-  - Creates notes tied to the current user (`user_id`)
-  - Inline `Edit` (prompt) and `Delete` actions update the list immediately
-  - UI loaders during fetch and toasts for all actions
+  - Reads notes ordered by `created_at` (desc).
+  - Creates notes with `title` and `content` tied to the current user (`user_id`).
+  - Inline edit via the top form; `Save Changes` updates, `Cancel` resets the form.
+  - Client-side search over title/content; inline loader during fetch; toast feedback for actions and validation.
 - **Security**
-  - RLS policies ensure users only see and modify their own notes
-  - Policies defined in `supabase/sql/setup.sql`
+  - RLS policies ensure users only see and modify their own notes.
 
 ### Tech Stack
 - **Frontend**: Vanilla JS, Tailwind CSS via CDN
@@ -44,26 +40,25 @@ A minimal notes app using Supabase Auth + Database with a modern Tailwind UI. No
 - **Client**: `@supabase/supabase-js@2` (loaded from CDN)
 
 ### Project Structure
-- **`index.html`**: App shell, Tailwind, sections for Auth and Notes, header logout, toast/loader
-- **`app.js`**: Auth flows, session handling, CRUD, UI updates, toast helpers
+- **`index.html`**: App shell, Tailwind, header logout, auth and notes sections, toast/loader
+- **`app.js`**: Auth flows, session handling, CRUD, search, inline edit, UI updates, toast helpers
 - **`styles.css`**: Legacy custom styles (not used by the Tailwind UI)
-- **`supabase/sql/setup.sql`**: Database schema and RLS policies
 
 ### Setup
 1. **Create a Supabase project** and copy your Project URL and anon key.
 2. **Configure keys** in `app.js`:
    - Replace `SUPABASE_URL` and `SUPABASE_ANON_KEY` with your own values.
-3. **Create the database schema** (optional if starting fresh):
-   - Run the SQL from `supabase/sql/setup.sql` in the Supabase SQL editor.
+3. **Create the database schema** 
 4. **Open** `index.html` in your browser.
 
 ### Usage
-- **Sign Up**: Enter email + password and click `Sign Up` (verify email if required in your project settings).
-- **Login**: Enter credentials and click `Login`.
-- **Add Note**: Type a note and click `Add`.
-- **Edit/Delete**: Use the `Edit`/`Delete` buttons on each note card.
+- **Sign Up/Login**: Enter email + password, click the relevant button.
+- **Add Note**: Enter title and content; click `Add Note`.
+- **Edit Note**: Click `Edit` on any card, modify using the top inputs, then `Save Changes` (or `Cancel`).
+- **Search**: Use the search box to filter by title/content.
+- **Delete Note**: Click `Delete` on a card.
 - **Logout**: Click `Logout` in the header.
 
 ### Notes
-- The schema includes `title` and `content`, but the current UI uses only `content`.
+- The schema includes `title` and `content`, and the UI uses both.
 - For production, prefer loading Tailwind via a build step and store keys using environment variables. The keys in `app.js` are client-side keys intended for public use in Supabase.

@@ -15,8 +15,12 @@ const notesSection = document.getElementById("notes-section");
 const authSection = document.getElementById("auth-section");
 const notesList = document.getElementById("notes-list");
 const notesLoader = document.getElementById("notes-loader");
+const notesEmpty = document.getElementById("notes-empty");
+const searchInput = document.getElementById("search");
+const newTitleInput = document.getElementById("new-title");
 const newNoteInput = document.getElementById("new-note");
 const addNoteBtn = document.getElementById("add-note");
+const cancelEditBtn = document.getElementById("cancel-edit");
 const toast = document.getElementById("toast");
 const toastText = document.getElementById("toast-text");
 
@@ -80,10 +84,13 @@ async function showNotes() {
 }
 
 // 🔹 CRUD OPERATIONS
-async function loadNotes() {
+let editState = { id: null };
+
+async function loadNotes(searchTerm = "") {
   notesList.innerHTML = "";
   // Show loader
   if (notesLoader) notesLoader.classList.remove("hidden");
+  if (notesEmpty) notesEmpty.classList.add("hidden");
   const { data: notes, error } = await supabase
     .from("notes")
     .select("*")
@@ -95,27 +102,50 @@ async function loadNotes() {
     return;
   }
 
-  notes.forEach((note) => {
+  // Filter client-side for simple search
+  const filtered = (notes || []).filter((n) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      (n.title && n.title.toLowerCase().includes(term)) ||
+      (n.content && n.content.toLowerCase().includes(term))
+    );
+  });
+
+  if (filtered.length === 0) {
+    if (notesEmpty) notesEmpty.classList.remove("hidden");
+  }
+
+  filtered.forEach((note) => {
     const li = document.createElement("li");
     li.className = "flex items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-800/60 p-3";
 
     const text = document.createElement("div");
     text.className = "text-slate-200";
-    text.textContent = note.content;
+    const title = document.createElement("h3");
+    title.className = "mb-1 text-slate-100 font-medium";
+    title.textContent = note.title || "Untitled";
+    const body = document.createElement("div");
+    body.className = "text-slate-300";
+    body.textContent = note.content || "";
+    text.appendChild(title);
+    text.appendChild(body);
 
     const actions = document.createElement("div");
     actions.className = "flex shrink-0 items-center gap-2";
 
     // Edit Button
     const editBtn = document.createElement("button");
-    editBtn.textContent = "Edit";
-    editBtn.className = "px-3 py-1.5 text-sm rounded-lg border border-emerald-600/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20";
-    editBtn.onclick = async () => {
-      const newContent = prompt("Edit note:", note.content);
-      if (newContent) {
-        await supabase.from("notes").update({ content: newContent }).eq("id", note.id);
-        loadNotes();
-      }
+    editBtn.textContent = editState.id === note.id ? "Editing" : "Edit";
+    editBtn.disabled = editState.id === note.id;
+    editBtn.className = "px-3 py-1.5 text-sm rounded-lg border border-emerald-600/30 bg-emerald-500/10 text-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-500/20";
+    editBtn.onclick = () => {
+      editState.id = note.id;
+      newTitleInput.value = note.title || "Untitled";
+      newNoteInput.value = note.content || "";
+      addNoteBtn.textContent = "Save Changes";
+      cancelEditBtn.classList.remove("hidden");
+      newNoteInput.focus();
     };
 
     // Delete Button
@@ -128,7 +158,15 @@ async function loadNotes() {
         showToast(error.message, 1000);
       } else {
         showToast("Deleted Successfully", 1000);
-        loadNotes();
+        if (editState.id === note.id) {
+          // Reset edit state if the edited note was deleted
+          editState.id = null;
+          newTitleInput.value = "";
+          newNoteInput.value = "";
+          addNoteBtn.textContent = "Add Note";
+          cancelEditBtn.classList.add("hidden");
+        }
+        loadNotes(searchInput?.value || "");
       }
     };
 
@@ -157,11 +195,26 @@ addNoteBtn.addEventListener("click", async () => {
     return;
   }
 
-  await supabase.from("notes").insert([
-    { content: newNoteInput.value, user_id: user.id },
-  ]);
+  const titleValue = (newTitleInput.value || "").trim() || "Untitled";
+  if (editState.id) {
+    // Save edits
+    await supabase
+      .from("notes")
+      .update({ title: titleValue, content: newNoteInput.value })
+      .eq("id", editState.id);
+    editState.id = null;
+    addNoteBtn.textContent = "Add Note";
+    cancelEditBtn.classList.add("hidden");
+    showToast("Saved changes", 1200);
+  } else {
+    await supabase.from("notes").insert([
+      { title: titleValue, content: newNoteInput.value, user_id: user.id },
+    ]);
+    showToast("Note added", 1200);
+  }
   newNoteInput.value = "";
-  loadNotes();
+  newTitleInput.value = "";
+  loadNotes(searchInput?.value || "");
 });
 
 // Check session on page load to decide header logout visibility
@@ -174,6 +227,20 @@ addNoteBtn.addEventListener("click", async () => {
     if (logoutBtn) logoutBtn.classList.add("hidden");
   }
 })();
+
+// Search notes
+searchInput && searchInput.addEventListener("input", (e) => {
+  loadNotes(e.target.value);
+});
+
+// Cancel inline edit
+cancelEditBtn && cancelEditBtn.addEventListener("click", () => {
+  editState.id = null;
+  addNoteBtn.textContent = "Add Note";
+  cancelEditBtn.classList.add("hidden");
+  newTitleInput.value = "";
+  newNoteInput.value = "";
+});
 
 // Toast helpers
 function showToast(message, autoHideMs) {
