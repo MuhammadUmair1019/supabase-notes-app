@@ -26,10 +26,19 @@ const toastText = document.getElementById("toast-text");
 const toastSpinner = document.getElementById("toast-spinner");
 const toastIcon = document.getElementById("toast-icon");
 
+// Image upload elements
+const imageInput = document.getElementById("image-input");
+const imageUploadArea = document.getElementById("image-upload-area");
+const imagePreviewContainer = document.getElementById("image-preview-container");
+
+// Image upload state
+let selectedImages = [];
+let uploadedImageUrls = [];
+
 // 🔹 AUTH HANDLING
 signupBtn.addEventListener("click", async () => {
   showToast("Creating your account...", undefined, "loading");
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email: emailInput.value,
     password: passwordInput.value,
   });
@@ -43,7 +52,7 @@ signupBtn.addEventListener("click", async () => {
 
 loginBtn.addEventListener("click", async () => {
   showToast("Logging in...", undefined, "loading");
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email: emailInput.value,
     password: passwordInput.value,
   });
@@ -67,6 +76,254 @@ logoutBtn.addEventListener("click", async () => {
   showToast("Signed out", 1200, "success");
 });
 
+// 🔹 IMAGE UPLOAD FUNCTIONALITY
+// Drag and drop functionality
+imageUploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  imageUploadArea.classList.add('border-emerald-500', 'bg-slate-800/30');
+});
+
+imageUploadArea.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  imageUploadArea.classList.remove('border-emerald-500', 'bg-slate-800/30');
+});
+
+imageUploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  imageUploadArea.classList.remove('border-emerald-500', 'bg-slate-800/30');
+  const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+  handleImageSelection(files);
+});
+
+// File input change
+imageInput.addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  handleImageSelection(files);
+});
+
+// Handle image selection
+function handleImageSelection(files) {
+  const validFiles = files.filter(file => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select only image files', 2000, 'error');
+      return false;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      showToast(`File ${file.name} is too large. Maximum size is 10MB`, 2000, 'error');
+      return false;
+    }
+    return true;
+  });
+
+  selectedImages = [...selectedImages, ...validFiles];
+  displayImagePreviews();
+}
+
+// Display image previews
+function displayImagePreviews() {
+  imagePreviewContainer.innerHTML = '';
+  
+  if (selectedImages.length === 0) {
+    imagePreviewContainer.classList.add('hidden');
+    return;
+  }
+
+  imagePreviewContainer.classList.remove('hidden');
+  
+  selectedImages.forEach((file, index) => {
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'relative group';
+    
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.className = 'w-full h-24 object-cover rounded-lg border border-slate-700';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    `;
+    removeBtn.className = 'absolute -top-2 -right-2 p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors opacity-0 group-hover:opacity-100';
+    removeBtn.onclick = () => removeImage(index);
+    
+    const fileName = document.createElement('p');
+    fileName.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+    fileName.className = 'text-xs text-slate-400 mt-1 truncate';
+    
+    previewDiv.appendChild(img);
+    previewDiv.appendChild(removeBtn);
+    previewDiv.appendChild(fileName);
+    imagePreviewContainer.appendChild(previewDiv);
+  });
+}
+
+// Remove image from selection
+function removeImage(index) {
+  selectedImages.splice(index, 1);
+  displayImagePreviews();
+}
+
+// Upload images to Supabase Storage
+async function uploadImagesToStorage() {
+  if (selectedImages.length === 0) return [];
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  
+  const uploadPromises = selectedImages.map(async (file, index) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}-${index}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('note-images')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('note-images')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
+  });
+  
+  const results = await Promise.all(uploadPromises);
+  return results.filter(url => url !== null);
+}
+
+// Clear image selection
+function clearImageSelection() {
+  selectedImages = [];
+  uploadedImageUrls = [];
+  imageInput.value = '';
+  displayImagePreviews();
+}
+
+// Show image modal for viewing larger images
+function showImageModal(imageUrl, allImages, currentIndex) {
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
+  
+  // Create modal content
+  const modalContent = document.createElement('div');
+  modalContent.className = 'relative max-w-4xl max-h-[90vh] bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden';
+  modalContent.onclick = (e) => e.stopPropagation();
+  
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  `;
+  closeBtn.className = 'absolute top-4 right-4 z-10 p-2 bg-slate-800/80 text-white rounded-full hover:bg-slate-700/80 transition-colors';
+  closeBtn.onclick = () => document.body.removeChild(modal);
+  
+  // Image container
+  const imgContainer = document.createElement('div');
+  imgContainer.className = 'relative';
+  
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.className = 'w-full h-auto max-h-[80vh] object-contain';
+  img.alt = 'Note image';
+  
+  imgContainer.appendChild(img);
+  modalContent.appendChild(closeBtn);
+  modalContent.appendChild(imgContainer);
+  
+  // Navigation if multiple images
+  if (allImages && allImages.length > 1) {
+    const navContainer = document.createElement('div');
+    navContainer.className = 'absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2';
+    
+    allImages.forEach((url, index) => {
+      const navBtn = document.createElement('button');
+      navBtn.className = `w-3 h-3 rounded-full transition-colors ${
+        index === currentIndex ? 'bg-emerald-500' : 'bg-slate-600 hover:bg-slate-500'
+      }`;
+      navBtn.onclick = () => {
+        img.src = url;
+        // Update active nav button
+        navContainer.querySelectorAll('button').forEach((btn, i) => {
+          btn.className = `w-3 h-3 rounded-full transition-colors ${
+            i === index ? 'bg-emerald-500' : 'bg-slate-600 hover:bg-slate-500'
+          }`;
+        });
+      };
+      navContainer.appendChild(navBtn);
+    });
+    
+    modalContent.appendChild(navContainer);
+  }
+  
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+  
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      document.body.removeChild(modal);
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+}
+
+// Display existing images during editing
+function displayExistingImages(imageUrls) {
+  imagePreviewContainer.innerHTML = '';
+  imagePreviewContainer.classList.remove('hidden');
+  
+  imageUrls.forEach((imageUrl, index) => {
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'relative group';
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'w-full h-24 object-cover rounded-lg border border-slate-700';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    `;
+    removeBtn.className = 'absolute -top-2 -right-2 p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors opacity-0 group-hover:opacity-100';
+    removeBtn.onclick = () => removeExistingImage(index);
+    
+    const fileName = document.createElement('p');
+    fileName.textContent = `Existing Image ${index + 1}`;
+    fileName.className = 'text-xs text-slate-400 mt-1 truncate';
+    
+    previewDiv.appendChild(img);
+    previewDiv.appendChild(removeBtn);
+    previewDiv.appendChild(fileName);
+    imagePreviewContainer.appendChild(previewDiv);
+  });
+}
+
+// Remove existing image from edit
+function removeExistingImage(index) {
+  uploadedImageUrls.splice(index, 1);
+  if (uploadedImageUrls.length === 0) {
+    imagePreviewContainer.classList.add('hidden');
+  } else {
+    displayExistingImages(uploadedImageUrls);
+  }
+}
+
 // 🔹 PROTECTED ROUTE
 async function showNotes() {
   const {
@@ -89,6 +346,12 @@ async function showNotes() {
 let editState = { id: null };
 
 async function loadNotes(searchTerm = "") {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    showToast("Please log in first!", 1800);
+    return;
+  }
+
   notesList.innerHTML = "";
   // Show loader
   if (notesLoader) notesLoader.classList.remove("hidden");
@@ -96,6 +359,7 @@ async function loadNotes(searchTerm = "") {
   const { data: notes, error } = await supabase
     .from("notes")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -124,7 +388,7 @@ async function loadNotes(searchTerm = "") {
     li.className = "flex items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-800/60 p-3";
 
     const text = document.createElement("div");
-    text.className = "text-slate-200";
+    text.className = "text-slate-200 flex-1";
     const title = document.createElement("h3");
     title.className = "mb-1 text-slate-100 font-medium";
     title.textContent = note.title || "Untitled";
@@ -133,6 +397,39 @@ async function loadNotes(searchTerm = "") {
     body.textContent = note.content || "";
     text.appendChild(title);
     text.appendChild(body);
+    
+    // Add images if they exist
+    if (note.images && note.images.length > 0) {
+      const imagesContainer = document.createElement("div");
+      imagesContainer.className = "mt-2 flex gap-2 flex-wrap";
+      
+      note.images.slice(0, 3).forEach((imageUrl, index) => {
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "relative group cursor-pointer";
+        
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        img.className = "w-16 h-16 object-cover rounded-lg border border-slate-700 hover:border-emerald-500 transition-colors";
+        img.alt = `Image ${index + 1}`;
+        
+        // Add click to view larger
+        img.onclick = () => showImageModal(imageUrl, note.images, index);
+        
+        imgWrapper.appendChild(img);
+        imagesContainer.appendChild(imgWrapper);
+      });
+      
+      // Show "+X more" if there are more than 3 images
+      if (note.images.length > 3) {
+        const moreText = document.createElement("div");
+        moreText.className = "w-16 h-16 rounded-lg border border-slate-700 bg-slate-800/60 flex items-center justify-center text-xs text-slate-400";
+        moreText.textContent = `+${note.images.length - 3}`;
+        moreText.onclick = () => showImageModal(note.images[3], note.images, 3);
+        imagesContainer.appendChild(moreText);
+      }
+      
+      text.appendChild(imagesContainer);
+    }
 
     const actions = document.createElement("div");
     actions.className = "flex shrink-0 items-center gap-2";
@@ -148,6 +445,14 @@ async function loadNotes(searchTerm = "") {
       newNoteInput.value = note.content || "";
       addNoteBtn.textContent = "Save Changes";
       cancelEditBtn.classList.remove("hidden");
+      
+      // Clear any existing image selection and show existing images
+      clearImageSelection();
+      if (note.images && note.images.length > 0) {
+        uploadedImageUrls = [...note.images];
+        displayExistingImages(note.images);
+      }
+      
       newNoteInput.focus();
     };
 
@@ -193,31 +498,71 @@ addNoteBtn.addEventListener("click", async () => {
     return;
   }
 
-  if(newNoteInput.value.trim() === "") {
-    showToast("Please enter a note", 1800, "error");
+  if(newNoteInput.value.trim() === "" && selectedImages.length === 0) {
+    showToast("Please enter a note or add an image", 1800, "error");
     return;
   }
 
   const titleValue = (newTitleInput.value || "").trim() || "Untitled";
-  if (editState.id) {
-    // Save edits
-    await supabase
-      .from("notes")
-      .update({ title: titleValue, content: newNoteInput.value })
-      .eq("id", editState.id);
-    editState.id = null;
-    addNoteBtn.textContent = "Add Note";
-    cancelEditBtn.classList.add("hidden");
-    showToast("Saved changes", 1200, "success");
-  } else {
-    await supabase.from("notes").insert([
-      { title: titleValue, content: newNoteInput.value, user_id: user.id },
-    ]);
-    showToast("Note added", 1200, "success");
+  
+  // Show loading state
+  addNoteBtn.disabled = true;
+  addNoteBtn.textContent = editState.id ? "Saving..." : "Adding...";
+  showToast(editState.id ? "Saving changes..." : "Adding note...", undefined, "loading");
+
+  try {
+    let imageUrls = [...uploadedImageUrls]; // Start with existing images
+    
+    // Upload new images if any are selected
+    if (selectedImages.length > 0) {
+      const newImageUrls = await uploadImagesToStorage();
+      if (newImageUrls.length === 0 && selectedImages.length > 0) {
+        showToast("Failed to upload images", 2000, "error");
+        return;
+      }
+      imageUrls = [...imageUrls, ...newImageUrls]; // Combine existing and new images
+    }
+
+    if (editState.id) {
+      // Save edits
+      await supabase
+        .from("notes")
+        .update({ 
+          title: titleValue, 
+          content: newNoteInput.value,
+          images: imageUrls.length > 0 ? imageUrls : null
+        })
+        .eq("id", editState.id);
+      editState.id = null;
+      addNoteBtn.textContent = "Add Note";
+      cancelEditBtn.classList.add("hidden");
+      showToast("Saved changes", 1200, "success");
+    } else {
+      await supabase.from("notes").insert([
+        { 
+          title: titleValue, 
+          content: newNoteInput.value, 
+          user_id: user.id,
+          images: imageUrls.length > 0 ? imageUrls : null
+        },
+      ]);
+      showToast("Note added", 1200, "success");
+    }
+    
+    // Clear form
+    newNoteInput.value = "";
+    newTitleInput.value = "";
+    clearImageSelection();
+    loadNotes(searchInput?.value || "");
+    
+  } catch (error) {
+    console.error('Error saving note:', error);
+    showToast("Failed to save note", 2000, "error");
+  } finally {
+    addNoteBtn.disabled = false;
+    addNoteBtn.textContent = editState.id ? "Save Changes" : "Add Note";
+    hideToast();
   }
-  newNoteInput.value = "";
-  newTitleInput.value = "";
-  loadNotes(searchInput?.value || "");
 });
 
 // Check session on page load to decide header logout visibility
@@ -243,6 +588,7 @@ cancelEditBtn && cancelEditBtn.addEventListener("click", () => {
   cancelEditBtn.classList.add("hidden");
   newTitleInput.value = "";
   newNoteInput.value = "";
+  clearImageSelection();
 });
 
 // Toast helpers
